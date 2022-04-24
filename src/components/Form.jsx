@@ -1,8 +1,12 @@
 import React from "react";
 import { firebase } from "../firebase";
+import { nanoid } from "nanoid";
+import alertify from "alertifyjs";
+import 'alertifyjs/build/css/alertify.css';
 
 const Form = () => {
     const [user, setUser] = React.useState({
+        id: "",
         firstname: "",
         lastname: "",
         email: "",
@@ -13,6 +17,7 @@ const Form = () => {
     });
     const countries = ["Colombia", "Argentina", "Brazil", "Canada", "United States", "Mexico"];
     const [users, setUsers] = React.useState([]);
+    const [editMode, setEditMode] = React.useState(false);
 
     const handlePropValue = (e, prop) => {
         setUser({
@@ -43,6 +48,75 @@ const Form = () => {
         getUsers();
     })
 
+    const validateFields = () => {
+        if (user.firstname.trim() === "") {
+            alertify.error("Firstname is required");
+            return false;
+        }
+
+        if (user.lastname.trim() === "") {
+            alertify.error("Lastname is required");
+            return false;
+        }
+
+        if (user.email.trim() === "") {
+            alertify.error("Email is required");
+            return false;
+        }
+
+        if (user.country.trim() === "") {
+            alertify.error("Country is required");
+            return false;
+        }
+
+        if (user.city.trim() === "") {
+            alertify.error("City is required");
+            return false;
+        }
+
+        if (user.address.trim() === "") {
+            alertify.error("Address is required");
+            return false;
+        }
+
+        if (isNaN(user.phone.trim())) {
+            alertify.error("Phone is required");
+            return false;
+        }
+
+        console.log(user.phone.substring(0, 1))
+
+        if (user.phone.trim().length > 0 && user.phone.substring(0, 1) !== "3") {
+            alertify.error("Phone must start with 3");
+            return false;
+        }
+
+        if (user.phone.trim().length > 0 && user.phone.trim().length !== 10) {
+            alertify.error("Phone must be 10 digits");
+            return false;
+        }
+
+        if (user.phone.trim() === "") {
+            alertify.error("Phone is required");
+            return false;
+        }
+
+        return true;
+    };
+
+    const cleanInputs = () => {
+        setUser({
+            id: "",
+            firstname: "",
+            lastname: "",
+            email: "",
+            country: "",
+            city: "",
+            address: "",
+            phone: ""
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -56,8 +130,7 @@ const Form = () => {
             phone
         } = user;
 
-        if (!firstname.trim() || !lastname.trim()) {
-            alert("Please enter all fields");
+        if (!validateFields()) {
             return;
         }
 
@@ -76,14 +149,78 @@ const Form = () => {
 
             await db.collection("users").add(newUser)
 
+            newUser.id = nanoid();
+
             setUsers([...users, newUser]);
+
+            alertify.success("User added successfully!");
+
+            setEditMode(false);
+            cleanInputs();
+        } catch (error) {
+            alertify.error("Error adding user");
+            console.error("Error adding document: ", error);
+        }
+    };
+
+    const setEditModeInput = (user) => {
+        setUser(user);
+        setEditMode(true);
+    };
+
+    const handleUserEdit = async (e) => {
+        e.preventDefault();
+
+        const {
+            id,
+            firstname,
+            lastname,
+            email,
+            country,
+            city,
+            address,
+            phone
+        } = user;
+
+        try {
+            const db = firebase.firestore();
+
+            const newUser = {
+                firstname,
+                lastname,
+                email,
+                country,
+                city,
+                address,
+                phone
+            };
+
+            await db.collection("users").doc(id).update(newUser);
+
+            setUsers([...users, newUser]);
+
+            alertify.success("User edited successfully!");
+
+            setEditMode(false);
+            cleanInputs();
         } catch (error) {
             console.error("Error adding document: ", error);
         }
+    };
 
-        //clear inputs
-        alert("User added successfully");
-        setUser("");
+
+
+    const handleUserDelete = async (id) => {
+        try {
+            const db = firebase.firestore();
+            await db.collection('users').doc(id).delete();
+
+            setUsers(users.filter(user => user.id !== id));
+
+            alertify.success("User deleted successfully!");
+        } catch (error) {
+            console.log(error);
+        }
     };
 
 
@@ -152,10 +289,16 @@ const Form = () => {
                                                     {user.phone}
                                                 </td>
                                                 <td>
-                                                    <button className="px-4 py-2 text-sm leading-5 bg-orange-500 text-white font-medium rounded-md shadow-sm focus:outline-none focus:shadow-outline hover:bg-orange-600 mr-3">
+                                                    <button
+                                                        className="px-4 py-2 text-sm leading-5 bg-orange-500 text-white font-medium rounded-md shadow-sm focus:outline-none focus:shadow-outline hover:bg-orange-600 mr-3"
+                                                        onClick={() => setEditModeInput(user)}
+                                                    >
                                                         Edit
                                                     </button>
-                                                    <button className="px-4 py-2 text-sm leading-5 bg-red-600 text-white font-medium rounded-md shadow-sm focus:outline-none focus:shadow-outline hover:bg-red-700 hover:fw-">
+                                                    <button
+                                                        className="px-4 py-2 text-sm leading-5 bg-red-600 text-white font-medium rounded-md shadow-sm focus:outline-none focus:shadow-outline hover:bg-red-700 hover:fw-"
+                                                        onClick={() => handleUserDelete(user.id)}
+                                                    >
                                                         Delete
                                                     </button>
                                                 </td>
@@ -174,7 +317,7 @@ const Form = () => {
                         <div className="px-4 py-5 sm:px-6">
                             <h3 className="text-lg leading-6 font-medium text-gray-900">Users Registration</h3>
                         </div>
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={!editMode ? handleSubmit : handleUserEdit}>
                             <div className="shadow overflow-hidden sm:rounded-md">
                                 <div className="px-4 py-5 bg-white sm:p-6">
                                     <div className="grid grid-cols-6 gap-6">
@@ -187,7 +330,7 @@ const Form = () => {
                                                 autoComplete="given-name"
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:shadow-outline"
                                                 onChange={(e) => handlePropValue(e, 'firstname')}
-                                                required={true}
+                                                value={user.firstname}
                                             />
                                         </div>
 
@@ -200,7 +343,7 @@ const Form = () => {
                                                 autoComplete="family-name"
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                                 onChange={(e) => handlePropValue(e, 'lastname')}
-                                                required={true}
+                                                value={user.lastname}
                                             />
                                         </div>
 
@@ -213,8 +356,9 @@ const Form = () => {
                                                 autoComplete="email"
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                                 onChange={(e) => handlePropValue(e, 'email')}
+                                                value={user.email}
                                             />
-                                            <p class="mt-2 invisible peer-invalid:visible text-pink-600 text-sm">
+                                            <p className="mt-2 invisible peer-invalid:visible text-pink-600 text-sm">
                                                 Please provide a valid email address.
                                             </p>
                                         </div>
@@ -227,6 +371,7 @@ const Form = () => {
                                                 autoComplete="country-name"
                                                 className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                                 onChange={(e) => handlePropValue(e, 'country')}
+                                                value={user.country}
                                             >
                                                 <option value="">Choose...</option>
                                                 {
@@ -248,6 +393,7 @@ const Form = () => {
                                                 autoComplete="address-level2"
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                                 onChange={(e) => handlePropValue(e, 'city')}
+                                                value={user.city}
                                             />
                                         </div>
 
@@ -260,6 +406,7 @@ const Form = () => {
                                                 autoComplete="street-address"
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                                 onChange={(e) => handlePropValue(e, 'address')}
+                                                value={user.address}
                                             />
                                         </div>
 
@@ -272,13 +419,15 @@ const Form = () => {
                                                 autoComplete="phone-number"
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                                 onChange={(e) => handlePropValue(e, 'phone')}
-                                                required={true}
+                                                value={user.phone}
+                                                maxLength={10}
+                                                minLength={10}
                                             />
                                         </div>
                                     </div>
                                 </div>
                                 <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                                    <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Save</button>
+                                    <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">{editMode ? "Update" : "Save"}</button>
                                 </div>
                             </div>
                         </form>
