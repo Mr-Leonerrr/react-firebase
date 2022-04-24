@@ -21,6 +21,28 @@ const Form = () => {
         })
     };
 
+
+    React.useEffect(() => {
+        const getUsers = async () => {
+            try {
+                const db = firebase.firestore();
+                const data = await db.collection("users").get();
+                const users = data.docs.map(doc => {
+                    return {
+                        id: doc.id,
+                        ...doc.data()
+                    }
+                });
+
+                setUsers(users);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        getUsers();
+    })
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -75,26 +97,75 @@ const Form = () => {
                             <h3 className="text-lg leading-6 font-medium text-gray-900">Users Information</h3>
                             <p className="mt-1 max-w-2xl text-sm text-gray-500">Personal details.</p>
                         </div>
-                        <div className="border-t border-gray-200">
-                            <dl>
-                                <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-7 sm:gap-4 sm:px-6">
-                                    <dt className="text-sm font-medium text-gray-500">Firstname</dt>
-                                    <dt className="text-sm font-medium text-gray-500">Last Name</dt>
-                                    <dt className="text-sm font-medium text-gray-500">Email</dt>
-                                    <dt className="text-sm font-medium text-gray-500">Country</dt>
-                                    <dt className="text-sm font-medium text-gray-500">City</dt>
-                                    <dt className="text-sm font-medium text-gray-500">Address</dt>
-                                    <dt className="text-sm font-medium text-gray-500">Phone</dt>
+                        <div className="table-responsive">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                    <tr>
+                                        <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                            First Name
+                                        </th>
+                                        <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                            Last Name
+                                        </th>
+                                        <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                            Email
+                                        </th>
+                                        <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                            Country
+                                        </th>
+                                        <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                            City
+                                        </th>
+                                        <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                            Address
+                                        </th>
+                                        <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                            Phone
+                                        </th>
+                                        <th className="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
 
-                                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0">Leonardo</dd>
-                                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0">Natera</dd>
-                                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0">hello@imleoner.xyz</dd>
-                                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0">Colombia</dd>
-                                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0">Malambo</dd>
-                                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0">Calle 140</dd>
-                                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0">3102313202</dd>
-                                </div>
-                            </dl>
+                                    {
+                                        users.map(user => (
+                                            <tr key={user.id} className="odd:bg-white even:bg-slate-100">
+                                                <td className="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-900">
+                                                    {user.firstname}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-900">
+                                                    {user.lastname}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-900">
+                                                    {user.email}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-900">
+                                                    {user.country}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-900">
+                                                    {user.city}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-900">
+                                                    {user.address}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-900">
+                                                    {user.phone}
+                                                </td>
+                                                <td>
+                                                    <button className="px-4 py-2 text-sm leading-5 bg-orange-500 text-white font-medium rounded-md shadow-sm focus:outline-none focus:shadow-outline hover:bg-orange-600 mr-3">
+                                                        Edit
+                                                    </button>
+                                                    <button className="px-4 py-2 text-sm leading-5 bg-red-600 text-white font-medium rounded-md shadow-sm focus:outline-none focus:shadow-outline hover:bg-red-700 hover:fw-">
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    }
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -114,7 +185,7 @@ const Form = () => {
                                                 name="first-name"
                                                 id="first-name"
                                                 autoComplete="given-name"
-                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md required:border-red-500 focus:shadow-outline"
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:shadow-outline"
                                                 onChange={(e) => handlePropValue(e, 'firstname')}
                                                 required={true}
                                             />
@@ -133,16 +204,19 @@ const Form = () => {
                                             />
                                         </div>
 
-                                        <div class="col-span-6 sm:col-span-4">
-                                            <label for="email-address" class="block text-sm font-medium text-gray-700">Email address</label>
+                                        <div className="col-span-6 sm:col-span-4">
+                                            <label htmlFor="email-address" className="block text-sm font-medium text-gray-700">Email address</label>
                                             <input
-                                                type="text"
+                                                type="email"
                                                 name="email-address"
                                                 id="email-address"
-                                                autocomplete="email"
-                                                class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                                autoComplete="email"
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                                 onChange={(e) => handlePropValue(e, 'email')}
                                             />
+                                            <p class="mt-2 invisible peer-invalid:visible text-pink-600 text-sm">
+                                                Please provide a valid email address.
+                                            </p>
                                         </div>
 
                                         <div className="col-span-6 sm:col-span-3">
