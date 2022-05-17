@@ -1,11 +1,12 @@
 import React from 'react';
 import './App.css';
-import Form from './components/Form';
+//import Form from './components/Form';
+import Props from './components/props_test';
 
 function App() {
   return (
     <>
-      <Form />
+      <Props qty={7}/>
     </>
   );
 }
