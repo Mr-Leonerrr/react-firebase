@@ -47,10 +47,13 @@ describe('Testing Counter', () => {
 
     describe('Testing reset button', () => {
         test('click', () => {
+            const wrapper = shallow(<Counter initial={20}/>);
+            wrapper.find('button').at(0).simulate('click');
+            wrapper.find('button').at(0).simulate('click');
             wrapper.find('button').at(1).simulate('click');
+            
     
-            expect(wrapper.find('#value').text()).toBe("El valor de la variable contador es: 0");
+            expect(wrapper.find('#value').text()).toBe("El valor de la variable contador es: 20");
         });
     });
-    
 });
